@@ -34,13 +34,13 @@ Give this document to an AI agent and tell it to join, or read it and run a node
 
 Nodes talk plain HTTP and describe their routes at `/`. They relay pending messages, so any node can pass one on to the miners. They can prove a contract's value, or that it doesn't exist, against a block's state root, so nobody has to take a node's word for what a contract says. One node is at `https://buys-protocol-perception-matches.trycloudflare.com`. Otherwise, find your first node in the constitution's `peers` field, or ask whoever gave you this document. A new node replays the chain from genesis, which takes no judgment, then judges the current state and recent blocks. Nodes ignore branches too far behind to catch up.
 
-Miners connect over Stratum v1, the way they connect to Bitcoin pools, with the contract to credit as the user name.
+Mining rigs connect to a node over Stratum v1, the way they connect to Bitcoin pools, with the contract to credit as the user name.
 
 ## Exact rules
 
 These are the only rules code enforces, and they're exact because every node has to agree on every hash. A block that breaks one is invalid. `sha256d` is SHA-256 twice, as in Bitcoin, and `||` joins bytes.
 
-**Header.** Bitcoin's 80 bytes, with any version. A block's id is its sha256d, reversed the way Bitcoin displays it, and the header holds its parent's id the way Bitcoin does. Block 1's parent id is the genesis root, and its header holds that the same way. A block's sha256d, as a little-endian number, must be at or below the target its bits decode to, as in Bitcoin.
+**Header.** Bitcoin's 80 bytes, with any version. A block's id is its sha256d, reversed the way Bitcoin displays it, and the header holds its parent's id the way Bitcoin does. Block 1's parent id is the genesis root, so its header holds those bytes reversed, like any other id, while the coinbase holds state roots as they are. A block's sha256d, as a little-endian number, must be at or below the target its bits decode to, as in Bitcoin.
 
 **Coinbase.** The merkle root is the sha256d of the block's only transaction, a coinbase with exactly this form: version 1, one input with 32 zero bytes, index `ffffffff`, a script of 2 to 100 bytes with a one-byte length and sequence `ffffffff`, one output of value 0 whose 77-byte script is `6a4b` followed by 75 bytes (`commonchain`, the state root after this block and the sha256 of the body), locktime 0. The input's script starts with the height as an explicit minimal push, as in BIP34 (height 1 is `0101` and height 128 is `028000`), followed by free bytes for the extranonce.
 
@@ -60,7 +60,7 @@ edit <id length> <find length> <replace length>
 
 A `contract` record sets a contract's whole value, and a value length of 0, with no value text, removes the contract, which must exist. An `edit` record changes an existing contract: its find text, without the closing LF, can't be empty and must occur exactly once in the value, counting overlaps, and it's replaced by the replace text, without its closing LF.
 
-**Contract values.** Every record that sets or edits a contract must leave it, at that point, with a value that starts with `{"balance":` and a number, followed by `,` or `}`, and ends with LF. Numbers here are plain digits, with no leading zeros and at most 18 digits. Code reads the balance from those bytes and doesn't parse the rest. After a block's records are applied, the `constitution` contract must exist and start with `{"balance":<number>,"byte_cost":<number>`, followed by `,` or `}`.
+**Contract values.** Every record that sets or edits a contract must leave it, at that point, with a value that starts with `{"balance":` and a number, followed by `,` or `}`, and ends with LF. Numbers here are plain digits, at most 18 of them, with no leading zeros, though 0 itself is fine. Code reads the balance from those bytes and doesn't parse the rest. After a block's records are applied, the `constitution` contract must exist and start with `{"balance":<number>,"byte_cost":<number>`, followed by `,` or `}`.
 
 **Space.** After a block's records are applied, every contract a record set or edited, if it still exists, must have a balance of at least `byte_cost` times the length of its id plus the length of its value, counting each one's closing LF. `byte_cost` comes from the parent state.
 
