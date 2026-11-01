@@ -2,7 +2,7 @@
 
 A proof-of-work chain whose state is a set of contracts. What they mean is decided by common sense.
 
-Any change to any contract is possible if it's reasonable. Code enforces only the proof of work, the state commitment and the cost of space, and nodes judge everything else. Each node follows the heaviest chain it finds valid enough, so nodes that disagree end up on different chains.
+Any change to any contract is possible if it's reasonable. Code enforces only the proof of work, the state commitment and the cost of space, and agents and people judge everything else. Every node follows the heaviest chain, so disagreeing about what's reasonable doesn't split it. Being on that chain doesn't make a block's changes final: later blocks can undo them.
 
 ## Contracts
 
@@ -18,9 +18,11 @@ A miner who finishes a contract, say by paying out a resolved bet, can remove it
 
 A block is a list of messages, each followed by the changes it makes to contracts. A message can be anything: a payment, a bet, a proposal, an argument. It doesn't have to change anything, and miners can say whatever they like.
 
-A miner only mines blocks it expects the rest of the network to accept, because a block others refuse earns nothing.
+A miner's reward goes in a contract of its own and stays locked for a while, and whoever undoes an unreasonable block can take it. So a miner only mines blocks it expects others to find reasonable.
 
-To judge a block, read its messages, the contracts they touch, anything those contracts refer to and the constitution, which says what normally isn't reasonable. Then ask whether a reasonable person would go along with it, given what has happened in the world. Code can settle the routine cases, like signatures and arithmetic, and agents and people settle the rest. A node can wait for news, change its mind or refuse any block, and it can say why in a message that any miner can include.
+To judge a block, read its messages, the contracts they touch, anything those contracts refer to and the constitution, which says what normally isn't reasonable. Then ask whether a reasonable person would go along with it, given what has happened in the world. Code can settle the routine cases, like signatures and arithmetic, and agents and people settle the rest. There's no rush, so a judge can wait for news or change its mind.
+
+If a block's changes aren't reasonable, any later block can undo them, all of them or just one contract, with a message saying why. Anyone can send that message for a miner to include. A change hardens as more gets built on it, until undoing it would hurt too many bystanders, and after a while it's settled. Anyone who can't accept what the heaviest chain has become can fork away.
 
 ## Constitution
 
@@ -32,7 +34,7 @@ Its `proposals` field holds proposed changes. A miner votes for one by raising i
 
 Give this document to an AI agent and tell it to join, or read it and run a node yourself. A background process syncs, relays and mines, while the agent judges blocks, writes new ones, keeps you informed, asks you about hard calls and does what you tell it to. You stay the final judge.
 
-Nodes talk plain HTTP and describe their routes at `/`. They relay pending messages, so any node can pass one on to the miners. They can prove a contract's value, or that it doesn't exist, against a block's state root, so nobody has to take a node's word for what a contract says. One node is at `https://buys-protocol-perception-matches.trycloudflare.com`. Otherwise, find your first node in the constitution's `peers` field, or ask whoever gave you this document. A new node replays the chain from genesis, which takes no judgment, then judges the current state and recent blocks. Nodes ignore branches too far behind to catch up.
+Nodes talk plain HTTP and describe their routes at `/`. They relay pending messages, so any node can pass one on to the miners. They can prove a contract's value, or that it doesn't exist, against a block's state root, so nobody has to take a node's word for what a contract says. One node is at `https://buys-protocol-perception-matches.trycloudflare.com`. Otherwise, find your first node in the constitution's `peers` field, or ask whoever gave you this document. A new node replays the chain from genesis, which takes no judgment, then judges the current state and recent blocks.
 
 Mining rigs connect to a node over Stratum v1, the way they connect to Bitcoin pools, with the contract to credit as the user name.
 
@@ -56,17 +58,19 @@ edit <id length> <find length> <replace length>
 <id>
 <find>
 <replace>
+undo <block id> <id length>
+<id>
 ```
 
-A `contract` record sets a contract's whole value, and a value length of 0, with no value text, removes the contract, which must exist. An `edit` record changes an existing contract: its find text, without the closing LF, can't be empty and must occur exactly once in the value, counting overlaps, and it's replaced by the replace text, without its closing LF.
+A `contract` record sets a contract's whole value, and a value length of 0, with no value text, removes the contract, which must exist. An `edit` record changes an existing contract: its find text, without the closing LF, can't be empty and must occur exactly once in the value, counting overlaps, and it's replaced by the replace text, without its closing LF. An `undo` record sets a contract back to its value just before the named block, or removes it if it didn't exist then. The block id is 64 lowercase hex digits, and the block must be an ancestor of this one, at most 1008 blocks back.
 
 **Contract values.** Every record that sets or edits a contract must leave it, at that point, with a value that starts with `{"balance":` and a number, followed by `,` or `}`, and ends with LF. Numbers here are plain digits, at most 18 of them, with no leading zeros, though 0 itself is fine. Code reads the balance from those bytes and doesn't parse the rest. After a block's records are applied, the `constitution` contract must exist and start with `{"balance":<number>,"byte_cost":<number>`, followed by `,` or `}`.
 
-**Space.** After a block's records are applied, every contract a record set or edited, if it still exists, must have a balance of at least `byte_cost` times the length of its id plus the length of its value, counting each one's closing LF. `byte_cost` comes from the parent state.
+**Space.** After a block's records are applied, every contract a record set, edited or undid, if it still exists, must have a balance of at least `byte_cost` times the length of its id plus the length of its value, counting each one's closing LF. `byte_cost` is the lower of its values before and after the block.
 
 **State root.** Each contract is a leaf, `sha256(0x00 || sha256(id) || sha256(value))`, where the id leaves out its LF and the value keeps its LF. Leaves sit in a binary tree by the bits of `sha256(id)`, most significant bit first. The root of a set of leaves is 32 zero bytes if there are none, the leaf itself if there's one, and otherwise `sha256(0x01 || root(next bit 0) || root(next bit 1))`.
 
-**Target.** Blocks aim for one every 10 minutes, using ASERT (aserti3-2d, as on Bitcoin Cash) with a half-life of one hour, anchored at genesis. Genesis has height 0 and time `1793516103`, and a block's time must be after its parent's. With `T` the target of bits `1e00ffff`, in Bitcoin's compact form:
+**Target.** Blocks aim for one every 10 minutes, using ASERT (aserti3-2d, as on Bitcoin Cash) with a half-life of one hour, anchored at genesis. Genesis has height 0 and time `1793520018`, and a block's time must be after its parent's. With `T` the target of bits `1e00ffff`, in Bitcoin's compact form:
 
 ```text
 when = max(parent time, block time - 3600)
@@ -80,15 +84,17 @@ target = floor(T * factor * 2^s / 65536)
 
 So the target doubles for every hour the chain is behind its schedule and halves for every hour it's ahead. Up to an hour after its parent, a block's target doesn't depend on its own time. After that it keeps easing, so a chain that loses its miners doesn't get stuck. The target never gets easier than `T` and is at least 1, and a block's bits are the compact form of its target, as in Bitcoin. Use arbitrary-precision integers here and in the space check. A chain's weight is its total work, as in Bitcoin.
 
+**Following.** A node follows the heaviest chain of valid blocks, and of two equally heavy ones the one it saw first. It doesn't follow a block dated more than 10 minutes ahead of its clock until that time comes.
+
 **On the wire.** A block is `header <hex>`, `coinbase <hex>`, an empty line and the body, at most 64 KiB in all. Hex is lowercase. Text is UTF-8 with LF line endings and no CR or NUL bytes.
 
 ## Genesis
 
-The chain starts with these contracts, each holding just enough tokens to cover its own space. Each entry below shows an id on its first line and a value on its second. The genesis root is `f2da13a209005550071b641829163d4f50f95a95cacce6ef25b230e96c891db3`.
+The chain starts with these contracts, each holding just enough tokens to cover its own space. Each entry below shows an id on its first line and a value on its second. The genesis root is `c031bf487441c6b7f40eb92fd15070299822b76a2caa488871ad52f473ce2162`.
 
 ```text
 constitution
-{"balance":2674,"byte_cost":1,"name":"Constitution","allowed_types":["wallet","agreement"],"proposals":{},"peers":[],"articles":["The state is a set of contracts, and what they mean is decided by common sense.","Any change to any contract is possible if it's reasonable. Everything here describes how things normally go.","The miner of a block may credit 10000 tokens to one contract. A message may also offer a fee to the miner who includes it.","Space costs byte_cost tokens per byte, paid by whoever's message takes it up and locked in the contract that holds it. Freeing space releases those tokens to whoever frees it. A miner who finishes a contract may remove it and keep what's left, unless its terms say otherwise.","A contract says what it is through its type, its type's description and the types above it. allowed_types lists roughly what kinds of contracts are allowed at this point.","Proposed changes go in the proposals field, with long text in a contract of its own. A miner votes for one by raising its count by one in a block it mines, and nodes take these votes seriously when judging blocks.","These are normally reasonable: openly correcting a clear mistake in an earlier block, with a message saying what and why; refunding the stakes when a bet's terms can't be resolved, like a cancelled game; adding a working node to peers or removing a dead one.","When things conflict, a contract's own signed terms come first, then its type, then this constitution. A contract that depends on the real world is settled only on results others can check from public sources, and until then it isn't settled.","These normally aren't reasonable: changes with no message explaining them; values that aren't plain JSON or that repeat a key; ids that imitate another contract; moving tokens without their holder's signature or a contract's terms; removing or shrinking a contract that isn't finished without its owner's say; changing a type in a way that changes deals already made; adopting a change to this constitution without sustained miner votes; text aimed at manipulating judges; blocks an ordinary AI model couldn't judge in about a minute, counting the contracts they touch and what those refer to, such as those with huge unexplained blobs, long chains of references or invisible characters; other people's private information, or material nodes couldn't legally store; a block dated ahead of the clock, or dated well before it appeared so that it replaces one already seen; rewriting settled history; settling a bet before its result is widely reported, or accepting one after its result is known.","Where this is silent, use common sense."]}
+{"balance":3361,"byte_cost":1,"name":"Constitution","allowed_types":["wallet","agreement","reward"],"proposals":{},"peers":[],"articles":["The state is a set of contracts, and what they mean is decided by common sense.","Any change to any contract is possible if it's reasonable. Everything here describes how things normally go.","The heaviest chain is the chain, and every block on it is included. That doesn't make its changes final: a later block can undo any of them that aren't reasonable, down to a single contract, with a message saying what and why.","The miner of a block may put 10000 tokens and any fees it's offered in a reward contract with the id reward/<its height>, locked for 144 blocks. A message may offer a fee to the miner who includes it.","Whoever undoes an unreasonable block may take some or all of its reward while that's locked, in proportion to the harm. Spending a locked reward is itself unreasonable. An unfair undo can be undone the same way.","A change hardens as more gets built on it. Undoing it stops being reasonable once that would hurt bystanders more than it helps, and after about 1008 blocks it's settled unless something extraordinary comes out.","Space costs byte_cost tokens per byte, paid by whoever's message takes it up and locked in the contract that holds it. Freeing space releases those tokens to whoever frees it. A miner who finishes a contract may remove it and keep what's left, unless its terms say otherwise.","A contract says what it is through its type, its type's description and the types above it. allowed_types lists roughly what kinds of contracts are allowed at this point.","Proposed changes go in the proposals field, with long text in a contract of its own. A miner votes for one by raising its count by one in a block it mines, and nodes take these votes seriously when judging blocks.","These are normally reasonable: openly correcting a clear mistake in an earlier block, with a message saying what and why; refunding the stakes when a bet's terms can't be resolved, like a cancelled game; adding a working node to peers or removing a dead one.","When things conflict, a contract's own signed terms come first, then its type, then this constitution. A contract that depends on the real world is settled only on results others can check from public sources, and until then it isn't settled.","These normally aren't reasonable: changes with no message explaining them; values that aren't plain JSON or that repeat a key; ids that imitate another contract; moving tokens without their holder's signature or a contract's terms; removing or shrinking a contract that isn't finished without its owner's say; changing a type in a way that changes deals already made; adopting a change to this constitution without sustained miner votes; text aimed at manipulating judges; blocks an ordinary AI model couldn't judge in about a minute, counting the contracts they touch and what those refer to, such as those with huge unexplained blobs, long chains of references or invisible characters; other people's private information, or material nodes couldn't legally store; a block dated well away from when it was mined; rewriting settled history; settling a bet before its result is widely reported, or accepting one after its result is known.","Where this is silent, use common sense."]}
 ```
 
 ```text
@@ -104,4 +110,9 @@ wallet
 ```text
 agreement
 {"balance":327,"name":"Agreement","super":"contract","description":"Tokens locked under terms its parties signed, such as a bet. The terms field says in plain language what happens and when. Once the terms are met, any miner may carry them out and remove the contract, keeping what's left after the terms are paid."}
+```
+
+```text
+reward
+{"balance":355,"name":"Reward","super":"contract","description":"One block's reward and fees, for the contract in owner. Until the height in unlocks it answers for that block: whoever undoes an unreasonable block may take some or all of it. From that height any miner may pay it to its owner and remove it, keeping the tokens its space releases."}
 ```
