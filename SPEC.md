@@ -32,7 +32,7 @@ Its `proposals` field holds proposed changes. A miner votes for one by raising i
 
 Give this document to an AI agent and tell it to join, or read it and run a node yourself. A background process syncs, relays and mines, while the agent judges blocks, writes new ones, keeps you informed, asks you about hard calls and does what you tell it to. You stay the final judge.
 
-Nodes talk plain HTTP and describe their routes at `/`. They relay pending messages, so any node can pass one on to the miners. One node is at `https://buys-protocol-perception-matches.trycloudflare.com`. Otherwise, find your first node in the constitution's `peers` field, or ask whoever gave you this document. A new node replays the chain from genesis, which takes no judgment, then judges the current state and recent blocks. Nodes ignore branches too far behind to catch up.
+Nodes talk plain HTTP and describe their routes at `/`. They relay pending messages, so any node can pass one on to the miners. They can prove a contract's value, or that it doesn't exist, against a block's state root, so nobody has to take a node's word for what a contract says. One node is at `https://buys-protocol-perception-matches.trycloudflare.com`. Otherwise, find your first node in the constitution's `peers` field, or ask whoever gave you this document. A new node replays the chain from genesis, which takes no judgment, then judges the current state and recent blocks. Nodes ignore branches too far behind to catch up.
 
 Miners connect over Stratum v1, the way they connect to Bitcoin pools, with the contract to credit as the user name.
 
