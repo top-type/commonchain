@@ -70,7 +70,7 @@ A `contract` record sets a contract's whole value, and a value length of 0, with
 
 **State root.** Each contract is a leaf, `sha256(0x00 || sha256(id) || sha256(value))`, where the id leaves out its LF and the value keeps its LF. Leaves sit in a binary tree by the bits of `sha256(id)`, most significant bit first. The root of a set of leaves is 32 zero bytes if there are none, the leaf itself if there's one, and otherwise `sha256(0x01 || root(next bit 0) || root(next bit 1))`.
 
-**Target.** Blocks aim for one every 10 minutes, using ASERT (aserti3-2d, as on Bitcoin Cash) with a half-life of one hour, anchored at genesis. Genesis has height 0 and time `1793520587`, and a block's time must be after its parent's. With `T` the target of bits `1e00ffff`, in Bitcoin's compact form:
+**Target.** Blocks aim for one every 10 minutes, using ASERT (aserti3-2d, as on Bitcoin Cash) with a half-life of one hour, anchored at genesis. Genesis has height 0 and time `1793522271`, and a block's time must be after its parent's. With `T` the target of bits `1e00ffff`, in Bitcoin's compact form:
 
 ```text
 when = max(parent time, block time - 3600)
