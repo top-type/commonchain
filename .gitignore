@@ -1,0 +1,6 @@
+data/
+key.json
+native_miner
+native_miner.exe
+*.log
+__pycache__/
