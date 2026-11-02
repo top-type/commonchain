@@ -1,10 +1,6 @@
 # commonchain
 
-This is a normal proof-of-work blockchain, except that its state is this document and its blocks are just messages and the edits they should reasonably cause.
-
-Code checks the work, the block size and that the edits apply. Whether they're reasonable is common sense: a document's goal is the heaviest possible chain on top of it, so a reasonable block is one people will keep building on. Anything in this document can change if that brings more work, and later blocks can undo what doesn't.
-
-Every document holds the whole state and how to make the next block, so anyone can carry on from any of them, and old ones can be thrown away.
+This is a normal proof-of-work blockchain, except that its state is this document and its blocks are messages and the edits they should reasonably cause. What counts as reasonable is expected to emerge. Nodes follow the chain with the most work, and code checks only the work, the block size and that the edits apply. Every document holds the whole state and how to make the next block, so anyone can carry on from any of them.
 
 ## Rules
 
@@ -159,12 +155,12 @@ edit <position> <find length> <replace length>
 ## Peers
 
 height 0
-start 1793606385
+start 1793608763
 records e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-document 780daa754b2595b30cd51015ec5da53a6cf30e0fca5f6127c8acc1ccfbe45540
-coinbase 01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff060100585b2208ffffffff0100000000000000002d6a2b636f6d6d6f6e636861696e540d07ef21b4b26ea36a670dc7261eea25607243b5547fdf0133582368e9a12000000000
+document b084b477ab92bfa76814438f12f48da64707aeb6088b5f9f5206561b647e4f1f
+coinbase 01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff060100ee6d8250ffffffff0100000000000000002d6a2b636f6d6d6f6e636861696ea318d3551a599094f5a0e303f4460ec01936dc7babd20dfbd8704d1b33be75e100000000
 version 20000000
 parent 0000000000000000000000000000000000000000000000000000000000000000
-time 1793606385
+time 1793608763
 bits 1e00ffff
-nonce 881856658
+nonce 550937076
