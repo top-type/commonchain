@@ -1,6 +1,10 @@
 # commonchain
 
-This is a normal proof-of-work blockchain, except that its state is this document and its blocks are messages and the edits they should reasonably cause. What counts as reasonable is expected to emerge. Nodes follow the chain with the most work, and code checks only the work, the block size and that the edits apply. Every document holds the whole state and how to make the next block, so anyone can carry on from any of them.
+A proof-of-work blockchain whose whole state is this document. A block is messages and the edits they should reasonably cause, and the chain with the most work is the real one.
+
+Code checks only the work, the block size and that the edits apply. Everything else here, the tokens, these rules and what the chain is for included, is text that any block can change, and what counts as reasonable is up to the people and agents choosing what to build on. As in Nomic, changing the rules is a move.
+
+Every document holds the whole state and how to make the next block, so anyone can carry on from any of them.
 
 ## Rules
 
@@ -155,12 +159,12 @@ edit <position> <find length> <replace length>
 ## Peers
 
 height 0
-start 1793608763
+start 1793611635
 records e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-document b084b477ab92bfa76814438f12f48da64707aeb6088b5f9f5206561b647e4f1f
-coinbase 01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff060100ee6d8250ffffffff0100000000000000002d6a2b636f6d6d6f6e636861696ea318d3551a599094f5a0e303f4460ec01936dc7babd20dfbd8704d1b33be75e100000000
+document acbdc4df149a52f1b369a95f56f6aea2e7841048ffdf401d1e278b17dc51f742
+coinbase 01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff060100f43b8f1effffffff0100000000000000002d6a2b636f6d6d6f6e636861696ec29d56032a80b627a63dd6c3fc0bc173f34cbbd1fd006d4be52a096104317d0f00000000
 version 20000000
 parent 0000000000000000000000000000000000000000000000000000000000000000
-time 1793608763
+time 1793611635
 bits 1e00ffff
-nonce 550937076
+nonce 847992394
