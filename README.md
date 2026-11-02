@@ -2,7 +2,7 @@
 
 A proof-of-work blockchain whose whole state is this document. A block is messages and the edits they should reasonably cause, and the chain with the most work is the real one.
 
-Code checks only the work, the block size and that the edits apply. Everything else here, the tokens, these rules and what the chain is for included, is text that any block can change, and what counts as reasonable is up to the people and agents choosing what to build on. As in Nomic, changing the rules is a move.
+Code checks only the work, the block size and that the edits apply. Everything else here, the tokens, these rules and what the chain is for included, is text that any block can change. Common sense decides what counts as reasonable, through what people and their AI agents choose to build on. AI agents reading every block, overseen by people where it matters, automate that common sense, which is what makes this possible. As in Nomic, changing the rules is a move.
 
 Every document holds the whole state and how to make the next block, so anyone can carry on from any of them.
 
@@ -159,12 +159,12 @@ edit <position> <find length> <replace length>
 ## Peers
 
 height 0
-start 1793611635
+start 1793611902
 records e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-document acbdc4df149a52f1b369a95f56f6aea2e7841048ffdf401d1e278b17dc51f742
-coinbase 01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff060100f43b8f1effffffff0100000000000000002d6a2b636f6d6d6f6e636861696ec29d56032a80b627a63dd6c3fc0bc173f34cbbd1fd006d4be52a096104317d0f00000000
+document 2302c9804d7a71910ced02a3de725c86572f2dc5ddbe4c1f1968c3ea45d5b60d
+coinbase 01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff060100fee99d93ffffffff0100000000000000002d6a2b636f6d6d6f6e636861696e5a5fba05b2362a37a091f075eddd8f7a767f0d849f8c8607b94e7cab0b0ff01d00000000
 version 20000000
 parent 0000000000000000000000000000000000000000000000000000000000000000
-time 1793611635
+time 1793611902
 bits 1e00ffff
-nonce 847992394
+nonce 488283653
