@@ -15,14 +15,14 @@ These are exact, because every node has to agree on every hash. Something that b
 ```text
 message <length>
 <text>
-edit <find length> <replace length>
+edit <position> <find length> <replace length>
 <find>
 <replace>
 ```
 
 Lengths are in bytes and don't count the LF after each text.
 
-**Edits.** A block's document is its parent's document with the block's edits applied in order. An edit's find text isn't empty and occurs exactly once in the document at that point, counting overlaps. A document can be any length.
+**Edits.** A block's document is its parent's document with the block's edits applied in order. Each edit replaces its find text, which has to be at its position in the document as the edits before it left it. Positions count bytes from 0, and an empty find text just inserts. A document can be any length.
 
 **Proof.** A proof is ten lines, each ending in an LF:
 
@@ -41,9 +41,9 @@ nonce <number>
 
 Hex is lowercase. Numbers, here and in records, are plain digits, at most 18 of them, with no leading zeros. Times are Unix seconds. `version` and `bits` are 32-bit numbers written in hex, and `time` and `nonce` fit in 32 bits.
 
-**Work.** `coinbase` holds at most 200 bytes, which must contain the SHA-256 of the proof's first four lines with their LFs. Any form will do, and a Bitcoin coinbase transaction suits mining rigs best. A block's header is a Bitcoin block header, 80 bytes, built from `version`, `parent`, the merkle root, `time`, `bits` and `nonce`, stored the way Bitcoin stores them. The merkle root is the sha256d of the coinbase's bytes, and `sha256d` is SHA-256 twice. A block's name is the sha256d of its header, reversed the way Bitcoin displays it, which is also how `parent` is written. As a little-endian number, that sha256d must be at or below the target its bits decode to, and its bits must be the compact form of the target below. So rigs mine only the header, and changing any byte changes the name.
+**Work.** `coinbase` holds at most 200 bytes, which must contain the 32 bytes of the SHA-256 of the proof's first four lines with their LFs. Any form will do, and a Bitcoin coinbase transaction suits mining rigs best. A block's header is a Bitcoin block header, 80 bytes, built from `version`, `parent`, the merkle root, `time`, `bits` and `nonce`, stored the way Bitcoin stores them. The merkle root is the sha256d of the coinbase's bytes, and `sha256d` is SHA-256 twice. A block's name is the sha256d of its header, reversed the way Bitcoin displays it, which is also how `parent` is written. As a little-endian number, that sha256d must be at or below the target its bits decode to, and its bits must be the compact form of the target below, rounded down as Bitcoin does. So rigs mine only the header, and changing any byte changes the name.
 
-**Target.** Blocks aim for one every 10 minutes, using ASERT (aserti3-2d, as on Bitcoin Cash) with a half-life of one hour, anchored at `start`. With `T` the target of bits `1e00ffff`, in Bitcoin's compact form:
+**Target.** Blocks aim for one every 10 minutes, using ASERT (aserti3-2d, as on Bitcoin Cash) with a half-life of one hour, anchored at `start`, except that a block more than an hour after its parent also counts its own time. With `T` the target of bits `1e00ffff`, in Bitcoin's compact form:
 
 ```text
 when = max(parent time, block time - 3600)
@@ -59,7 +59,7 @@ The target never gets easier than `T` and is at least 1. Use arbitrary-precision
 
 **Parents.** A block's height is one more than its parent's, its `start` is the same and its time is later. A block whose parent is 64 zeros starts a chain, with height 0, any `start`, target `T`, no edits and any document.
 
-**Documents.** A document travels as its text, an LF and the proof of the block that gave it, and its SHA-256 has to match that proof. This file is one, so its name is its block's name. A copy with CRLF line endings has to be changed back to LF first.
+**Documents.** A document travels as its text, an LF and the proof of the block that gave it, and its SHA-256 has to match that proof. It goes by its block's name. This file is one, so its last ten lines are its proof. A copy with CRLF line endings has to be changed back to LF first.
 
 **Following.** A node starts from a document it trusts, which it checks by all of this except what needs its parent. From there it follows the heaviest chain of valid blocks through that document, by total work, and of two equally heavy ones the one it saw first. It doesn't follow a block dated more than 10 minutes ahead of its clock until it no longer is. A copy that fails against its own proof says nothing about the name it carries, so the real one can still come.
 
@@ -76,7 +76,7 @@ POST /message              takes a message as its body
 
 Nodes offer new blocks and messages to the peers they know and poll their tips, since not all of them can be reached. To catch up, walk back through parents from a peer's tip to a block you have. If that's too far, or they're gone, start over from a recent document.
 
-**Check.** Code that follows these rules accepts this document and then this block on it, though they aren't meant for any chain. Each runs from the line after its opening fence to the line before its closing one. The document has the name `000000ec4f16a9ee5dde9ad9faaaaab16afe46d3c286854fda38ab99abb08e09`.
+**Check.** Code that follows these rules accepts this document and then this block on it, though they aren't meant for any chain. Each runs from the line after its opening fence to the line before its closing one. The document has the name `000000aaf7d121f0c2b02d73121f1fbc90e222751a310e7c84e2683855f58980`.
 
 ```text
 some text
@@ -86,41 +86,41 @@ height 0
 start 1793539988
 records e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
 document 298f82988177061e5e5f1ae81b6ebe3e364c0e52d1b463847c690dc9656cb130
-coinbase 01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff06010016ab7a59ffffffff0100000000000000002d6a2b636f6d6d6f6e636861696e444fe7ceafcbd5f923e427133dbb3ae00ee538bcbbf5aff80d380ce1448a264300000000
+coinbase 01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0601003a4b4bd7ffffffff0100000000000000002d6a2b636f6d6d6f6e636861696e444fe7ceafcbd5f923e427133dbb3ae00ee538bcbbf5aff80d380ce1448a264300000000
 version 20000000
 parent 0000000000000000000000000000000000000000000000000000000000000000
 time 1793539988
 bits 1e00ffff
-nonce 1589677030
+nonce 146345404
 ```
 
-The block has the name `00000058152292b13e6d9ca3c8c3021ba9370126be1ea705bff0851006619925`, and gives the document `other text`, an LF, `and a new line` and an LF.
+The block has the name `00000005754950ab2539314e6fa7f3bc97c3b7f1c46ac550fe10bd08fd3bd146`, and gives the document `other text`, an LF, `and a new line` and an LF.
 
 ```text
 message 21
 Every kind of record.
-edit 9 10
+edit 0 9 10
 some text
 other text
-edit 10 0
+edit 11 10 0
 more text
 
 
-edit 10 25
-other text
-other text
+edit 10 0 15
+
+
 and a new line
 
 height 1
 start 1793539988
-records 426000bb5e32e08e7c9181b9f479f5a0f00eed8c3e6655c070863a086c9706b0
+records 56f4d07022e9abdd0061247786f528734cd615a621d365ffdb2aa4b4b553cc08
 document 404ca640bda821d924602ec13b5255160d91b3e2869c11cafd720f2b95819ea4
-coinbase 01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff060101adfb67d7ffffffff0100000000000000002d6a2b636f6d6d6f6e636861696e47b673b99243161a4bc1e72bc7e109d8301c938f981bb7f6107f35cd25045cc000000000
+coinbase 01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff060101c7669a42ffffffff0100000000000000002d6a2b636f6d6d6f6e636861696e81d0d7c3fdcafaf6a1dc610e7284619ecb835dc2a6f15134a90af6f242bb26b900000000
 version 20000000
-parent 000000ec4f16a9ee5dde9ad9faaaaab16afe46d3c286854fda38ab99abb08e09
+parent 000000aaf7d121f0c2b02d73121f1fbc90e222751a310e7c84e2683855f58980
 time 1793540588
 bits 1e00ffff
-nonce 943963359
+nonce 846445321
 ```
 
 With a parent at height 1000 and time `start` plus 500000, a block dated a minute after its parent has bits `1a12aa4d`, and one dated two hours after has bits `1a25549a`.
@@ -129,7 +129,7 @@ With a parent at height 1000 and time `start` plus 500000, a block dated a minut
 
 These are how things start, and they last as long as people hold to them.
 
-A block's miner can credit itself the block's work plus any fees, saying so in a message `reward <wallet> <tokens>`, with `<tokens>` what lands in the wallet, so a new wallet's own line comes out of it. A token is an expected hash. Whoever sends a message pays for the net bytes its edits add to this document, at floor(`byte cost` * `T` / target) tokens a byte, with the parent's `byte cost` and the block's target, and net bytes freed are refunded at that price. A new line counts whole, a number changing length doesn't, and message text is free. A later block can edit a bad block's reward back out, and it then goes to nobody.
+A block's miner can credit itself the block's work plus any fees, saying so in a message `reward <wallet> <tokens>`, with `<tokens>` what lands in the wallet, so a new wallet's own line comes out of it. A token is an expected hash. A message's edits are the ones after it, up to the next message, and whoever sends it pays for the net bytes they add to this document, at floor(`byte cost` * `T` / target) tokens a byte, with the parent's `byte cost` and the block's target, and net bytes freed are refunded at that price. A new line counts whole, a number changing length doesn't, and message text is free. A later block can edit a bad block's reward back out, and it then goes to nobody.
 
 byte cost 100000
 
@@ -141,15 +141,15 @@ So a block with a payment and a reward reads like this:
 message <length>
 pay <a> <b> 500 10 4
 sig <a> <signature>
-edit <find length> <replace length>
+edit <position> <find length> <replace length>
 <a> 1510 3
 <a> 1000 4
-edit <find length> <replace length>
+edit <position> <find length> <replace length>
 <b> 200 7
 <b> 700 7
 message <length>
 reward <m> 16777482
-edit <find length> <replace length>
+edit <position> <find length> <replace length>
 <m> 90 12
 <m> 16777572 12
 ```
@@ -159,12 +159,12 @@ edit <find length> <replace length>
 ## Peers
 
 height 0
-start 1793602845
+start 1793606385
 records e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-document 50f8f67160f7c72d4bfe6aca8b1c0783234b2cb47fc2a1570ff6187d0f5bc279
-coinbase 01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff060100eb26bee7ffffffff0100000000000000002d6a2b636f6d6d6f6e636861696e79b49cef3c1ca07b66923c1fe904451c2eab62cb4f1a39fe1e82f7360cda19bd00000000
+document 780daa754b2595b30cd51015ec5da53a6cf30e0fca5f6127c8acc1ccfbe45540
+coinbase 01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff060100585b2208ffffffff0100000000000000002d6a2b636f6d6d6f6e636861696e540d07ef21b4b26ea36a670dc7261eea25607243b5547fdf0133582368e9a12000000000
 version 20000000
 parent 0000000000000000000000000000000000000000000000000000000000000000
-time 1793602845
+time 1793606385
 bits 1e00ffff
-nonce 379487743
+nonce 881856658
